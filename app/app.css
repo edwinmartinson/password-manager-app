@@ -20,7 +20,7 @@
     @apply h-full;
   }
   body {
-    @apply bg-surface-primary text-content-primary h-full;
+    @apply bg-surface-primary text-content-primary h-full overflow-x-hidden;
   }
   ::placeholder {
     @apply text-content-tertiary;
