@@ -1,20 +1,19 @@
 import { Input, Field, Label } from "@headlessui/react";
-import { ClipboardIcon } from "@heroicons/react/24/outline";
 
 import type React from "react";
 import { cn } from "~/lib/utils";
-import Button from "./Button";
 
 type InputFieldProps = React.ComponentProps<"input"> & {
   label: string;
-  showCopy?: boolean;
+  showSecBtn?: boolean;
+  render?: () => React.ReactNode;
 };
 
 export default function InputField({
   label,
   className,
   required,
-  showCopy,
+  render,
   ...props
 }: InputFieldProps) {
   return (
@@ -33,11 +32,7 @@ export default function InputField({
           required={required}
         />
 
-        {showCopy && (
-          <Button variant="rounded" size="sm">
-            <ClipboardIcon className="size-4 stroke-2" />
-          </Button>
-        )}
+        {render && render()}
       </div>
     </Field>
   );

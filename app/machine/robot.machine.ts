@@ -1,55 +1,91 @@
 import {
   action,
   createMachine,
-  immediate,
   interpret,
   reduce,
   state,
   transition,
   type SendFunction,
 } from "robot3";
+import { copyToClipboard, logError } from "~/lib/utils";
 import type { Password } from "~/type.app";
 
+// Types
 type CTX = {
   passwords: Password[];
 };
 
 type EV<T> = {
-  type: string;
+  type: Event;
   value: T;
 };
 
-type Event = "ADD_PASSWORD" | "VIEW_PASSWORD" | "NEW_PASSWORD";
+type Event =
+  | "VIEW_MODE"
+  | "ADD_MODE"
+  | "DELETE_MODE"
+  | "EDIT_MODE"
+  | "ADD_PASSWORD"
+  | "DELETE_PASSWORD"
+  | "EDIT_PASSWORD"
+  | "COPY_EMAIL"
+  | "COPY_PASSWORD";
 
+export type MachineState = "viewMode" | "addMode" | "editMode" | "deleteMode";
+
+// Context
 const context = (): CTX => ({
   passwords: [],
+});
+
+// Reducers
+const reduceAddPassword = reduce<CTX, EV<Password>>((ctx, ev) => ({
+  passwords: [...ctx.passwords, ev.value],
+}));
+
+const reduceDeletePassword = reduce<CTX, EV<string>>((ctx, ev) => ({
+  passwords: ctx.passwords.filter((item) => item.id !== ev.value),
+}));
+
+// Actions
+const actionLogState = action<CTX, Event>((ctx, ev) => {
+  console.log("switching to: ", ev);
+});
+
+const actionCopyEmail = action<CTX, EV<string>>((ctx, ev) => {
+  const item = ctx.passwords.find((item) => (item.id = ev.value));
+
+  if (item) {
+    copyToClipboard(item.email).catch(logError);
+  }
+});
+
+const actionCopyPassword = action<CTX, EV<string>>((ctx, ev) => {
+  const item = ctx.passwords.find((item) => (item.id = ev.value));
+
+  if (item) {
+    copyToClipboard(item.password).catch(logError);
+  }
 });
 
 const RobotMachine = createMachine(
   {
     viewMode: state(
-      transition(
-        "ADD_PASSWORD",
-        "addMode",
-        action(() => console.log("Switching to addMode")),
-      ),
+      transition("ADD_MODE", "addMode", actionLogState),
+      transition("EDIT_MODE", "editMode", actionLogState),
+      transition("DELETE_MODE", "deleteMode", actionLogState),
+      transition("COPY_EMAIL", "viewMode", actionCopyEmail),
+      transition("COPY_PASSWORD", "viewMode", actionCopyPassword),
     ),
     addMode: state(
-      transition(
-        "VIEW_PASSWORD",
-        "viewMode",
-        action(() => console.log("Switching to viewMode")),
-      ),
-      transition(
-        "NEW_PASSWORD",
-        "addMode",
-        reduce<CTX, EV<Password>>((ctx, ev) => ({
-          passwords: [...ctx.passwords, ev.value],
-        })),
-      ),
+      transition("VIEW_MODE", "viewMode", actionLogState),
+      transition("ADD_PASSWORD", "addMode", reduceAddPassword),
     ),
-    editMode: state(),
-    deleteMode: state(),
+    editMode: state(transition("VIEW_MODE", "viewMode", actionLogState)),
+    deleteMode: state(
+      transition("VIEW_MODE", "viewMode", actionLogState),
+      transition("DELETE_PASSWORD", "viewMode", reduceDeletePassword),
+    ),
   },
   context,
 );
