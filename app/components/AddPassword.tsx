@@ -1,14 +1,76 @@
-import { Popover, PopoverPanel } from "@headlessui/react";
+import { Popover, PopoverPanel, useClose } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
 import Button from "./Button";
 import { Form } from "react-router";
 import InputField from "./InputField";
+import { useRef } from "react";
+import { useMutationObserver } from "~/hooks/useMutationObserver";
+import type { Password } from "~/type.app";
+import { nanoid } from "nanoid";
+import { generateSecurePassword } from "~/lib/utils";
 
-export default function AddPassword() {
+type AddPasswordProps = {
+  toggleAddMode: () => void;
+  toggleViewMode: () => void;
+  addPassword: (entry: Password) => void;
+};
+
+export default function AddPassword(props: AddPasswordProps) {
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
+
+  const handleState = () => {
+    if (popoverRef.current?.getAttribute("data-headlessui-state") === "") {
+      props.toggleAddMode();
+    } else {
+      props.toggleViewMode();
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.currentTarget);
+    const url = formData.get("url") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const id = nanoid();
+
+    props.addPassword({ id, url, email, password });
+    buttonRef.current?.click();
+  };
+
+  const handleGenerate = () => {
+    if (passwordRef.current) {
+      passwordRef.current.type = "text";
+      passwordRef.current.value = generateSecurePassword(12);
+    }
+  };
+
+  useMutationObserver(popoverRef, { attributes: true }, (mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === "data-headlessui-state") {
+        const target = mutation.target as HTMLElement;
+
+        if (target.getAttribute("data-headlessui-state") === "") {
+          props.toggleViewMode();
+        }
+      }
+    });
+  });
+
   return (
-    <Popover>
-      <Button variant="rounded" size="lg" className="group" isPopoverBtn>
+    <Popover ref={popoverRef}>
+      <Button
+        variant="rounded"
+        size="lg"
+        className="group"
+        isPopoverBtn
+        onClick={handleState}
+        ref={buttonRef}
+      >
         <PlusIcon className="size-6 stroke-2 transition-transform duration-200 ease-in-out group-data-open:rotate-45" />
       </Button>
 
@@ -25,29 +87,46 @@ export default function AddPassword() {
             </p>
           </div>
 
-          <Form autoComplete="false" className="space-y-3">
+          <Form
+            id="add-password-form"
+            name="add-password"
+            autoComplete="false"
+            className="space-y-3"
+            onSubmit={handleSubmit}
+          >
             <InputField
+              name="url"
               required
               type="url"
               label="url"
               placeholder="eg: https://placeholder.example"
             />
             <InputField
+              name="email"
               required
               type="email"
               label="email"
               placeholder="eg: placeholder@example.com"
             />
             <InputField
+              name="password"
               required
               type="password"
               label="password"
               placeholder="eg: ****"
+              ref={passwordRef}
             />
           </Form>
         </div>
 
-        <Button className="mt-8">Add password</Button>
+        <div className="mt-8 flex gap-2">
+          <Button variant="secondary" onClick={handleGenerate}>
+            Generate
+          </Button>
+          <Button type="submit" form="add-password-form">
+            Add password
+          </Button>
+        </div>
       </PopoverPanel>
     </Popover>
   );

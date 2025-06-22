@@ -9,6 +9,8 @@ const variants = cva("font-medium cursor-pointer", {
     variant: {
       primary:
         "w-full py-3 px-4 bg-surface-white text-content-black rounded-sm hover:bg-surface-white/95 active:bg-surface-white/90",
+      secondary:
+        "w-full py-3 px-4 bg-surface-secondary text-content-primary rounded-sm hover:bg-surface-tertiary active:bg-surface-tertiary/80",
       rounded:
         "bg-surface-secondary rounded-full flex items-center justify-center shrink-0 ring ring-transparent hover:ring-surface-tertiary active:bg-surface-tertiary",
     },

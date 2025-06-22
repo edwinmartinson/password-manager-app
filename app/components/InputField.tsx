@@ -18,8 +18,8 @@ export default function InputField({
   ...props
 }: InputFieldProps) {
   return (
-    <Field className="space-y-2 text-sm font-light">
-      <Label className="block">
+    <Field className="space-y-2">
+      <Label className="block text-sm font-light">
         {label} {required && <span className="text-red-500">*</span>}
       </Label>
 

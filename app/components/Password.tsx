@@ -9,8 +9,14 @@ import { KeyIcon } from "@heroicons/react/24/solid";
 import { ClipboardIcon } from "@heroicons/react/24/outline";
 import EditPassword from "./EditPassword";
 import Button from "./Button";
+import type { Password } from "~/type.app";
+import { generateAsterisk } from "~/lib/utils";
 
-export default function Password() {
+type PasswordProps = {
+  item: Password;
+};
+
+export default function Password(props: PasswordProps) {
   return (
     <PopoverGroup className="bg-surface-secondary hover:ring-surface-tertiary flex items-center gap-4 rounded-xl px-4 py-3 text-left ring ring-transparent">
       <Popover className="w-full">
@@ -20,8 +26,10 @@ export default function Password() {
           </div>
 
           <div className="w-full">
-            <p className="truncate text-lg">example.com</p>
-            <p className="text-content-secondary truncate">example@email.com</p>
+            <p className="truncate text-lg">{props.item.email}</p>
+            <p className="text-content-secondary truncate">
+              {generateAsterisk(props.item.password)}
+            </p>
           </div>
         </PopoverButton>
 
@@ -48,14 +56,14 @@ export default function Password() {
           anchor="bottom"
         >
           <div className="flex w-full items-center justify-between gap-2">
-            <p className="truncate">placeholder@example.com</p>
+            <p className="truncate">{props.item.email}</p>
             <Button variant="rounded" size="sm">
               <ClipboardIcon className="size-4 stroke-2" />
             </Button>
           </div>
 
           <div className="flex w-full items-center justify-between gap-2">
-            <p className="truncates">************</p>
+            <p className="truncates">{generateAsterisk(props.item.password)}</p>
             <Button variant="rounded" size="sm">
               <ClipboardIcon className="size-4 stroke-2" />
             </Button>
