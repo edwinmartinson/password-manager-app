@@ -4,31 +4,58 @@ import {
   PopoverButton,
   PopoverPanel,
   PopoverGroup,
-  CloseButton,
 } from "@headlessui/react";
 import { KeyIcon } from "@heroicons/react/24/solid";
-import { ClipboardIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import EditPassword from "./EditPassword";
-import Button from "./Button";
+import Button from "./ui/Button";
 import type { Password } from "~/type.app";
 import { extractDomain } from "~/lib/utils";
-import type { MachineState } from "~/machine/robot.machine";
+import type { MachineState } from "~/robot/machine";
+import { useRef } from "react";
+import { useMutationObserver } from "~/hooks/useMutationObserver";
+import CopyPassword from "./CopyPassword";
+import { useRobot } from "~/context/robot.context";
 
 type PasswordProps = {
   item: Password;
-  appState: MachineState;
-  copyEmail: (id: string) => void;
-  copyPassword: (id: string) => void;
-  deletePassword: (id: string) => void;
 };
 
 export default function Password(props: PasswordProps) {
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+
+  const { current, send } = useRobot();
+  const state = current.name as MachineState;
+
+  const handle = {
+    toggleViewMode: () => send("VIEW_MODE"),
+    toggleEditMode: () => send("EDIT_MODE"),
+    deletePassword: (id: string) => {
+      send({ type: "DELETE_PASSWORD", value: id });
+    },
+  };
+
+  useMutationObserver(popoverRef, { attributes: true }, (mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === "data-headlessui-state") {
+        const target = mutation.target as HTMLElement;
+
+        if (target.getAttribute("data-headlessui-state") === "") {
+          handle.toggleViewMode();
+        }
+      }
+    });
+  });
+
   return (
     <PopoverGroup className="bg-surface-secondary hover:ring-surface-tertiary flex items-center gap-4 rounded-xl px-4 py-3 text-left ring ring-transparent">
-      <Popover className="w-full">
-        <PopoverButton
-          disabled={props.appState !== "viewMode"}
+      <Popover id="xtarget" ref={popoverRef} className="w-full">
+        <Button
+          variant="raw"
+          disabled={state !== "viewMode"}
+          onClick={handle.toggleEditMode}
           className="flex w-full cursor-pointer items-center gap-4 text-left"
+          element={PopoverButton}
         >
           <div className="bg-surface-tertiary flex size-10 shrink-0 items-center justify-center rounded-full">
             <KeyIcon className="size-4" />
@@ -40,7 +67,7 @@ export default function Password(props: PasswordProps) {
               {props.item.email}
             </p>
           </div>
-        </PopoverButton>
+        </Button>
 
         <PopoverBackdrop className="bg-surface-primary/50 fixed inset-0 backdrop-blur-sm" />
 
@@ -52,46 +79,16 @@ export default function Password(props: PasswordProps) {
         </PopoverPanel>
       </Popover>
 
-      {props.appState === "deleteMode" ? (
+      {state === "deleteMode" ? (
         <Button
           variant="raw"
-          onClick={() => props.deletePassword(props.item.id)}
+          onClick={() => handle.deletePassword(props.item.id)}
           className="text-red-500 hover:text-red-500/80 active:text-red-500/90"
         >
           <TrashIcon className="size-7 stroke-2" />
         </Button>
       ) : (
-        <Popover>
-          <Button
-            variant="raw"
-            element={PopoverButton}
-            disabled={props.appState !== "viewMode"}
-            className="hover:text-content-primary/80 active:text-content-primary/90"
-          >
-            <ClipboardIcon className="size-7 stroke-2" />
-          </Button>
-
-          <PopoverPanel
-            className="bg-surface-primary/80 ring-surface-tertiary w-65 space-y-2 rounded-xl p-3 ring backdrop-blur-lg transition duration-200 ease-in-out [--anchor-gap:--spacing(4)] data-closed:translate-y-[-16px] data-closed:opacity-0"
-            transition
-            anchor="bottom"
-          >
-            <Button
-              element={CloseButton}
-              variant="secondary"
-              onClick={() => props.copyEmail(props.item.id)}
-            >
-              Copy Email
-            </Button>
-            <Button
-              element={CloseButton}
-              variant="secondary"
-              onClick={() => props.copyPassword(props.item.id)}
-            >
-              Copy Password
-            </Button>
-          </PopoverPanel>
-        </Popover>
+        <CopyPassword id={props.item.id} />
       )}
     </PopoverGroup>
   );

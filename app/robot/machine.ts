@@ -26,8 +26,8 @@ type Event =
   | "DELETE_MODE"
   | "EDIT_MODE"
   | "ADD_PASSWORD"
-  | "DELETE_PASSWORD"
   | "EDIT_PASSWORD"
+  | "DELETE_PASSWORD"
   | "COPY_EMAIL"
   | "COPY_PASSWORD";
 
@@ -43,6 +43,12 @@ const reduceAddPassword = reduce<CTX, EV<Password>>((ctx, ev) => ({
   passwords: [...ctx.passwords, ev.value],
 }));
 
+const reduceEditPassword = reduce<CTX, EV<Password>>((ctx, ev) => ({
+  passwords: ctx.passwords.map((item) =>
+    item.id === ev.value.id ? { ...item, ...ev.value } : item,
+  ),
+}));
+
 const reduceDeletePassword = reduce<CTX, EV<string>>((ctx, ev) => ({
   passwords: ctx.passwords.filter((item) => item.id !== ev.value),
 }));
@@ -53,7 +59,7 @@ const actionLogState = action<CTX, Event>((ctx, ev) => {
 });
 
 const actionCopyEmail = action<CTX, EV<string>>((ctx, ev) => {
-  const item = ctx.passwords.find((item) => (item.id = ev.value));
+  const item = ctx.passwords.find((item) => item.id == ev.value);
 
   if (item) {
     copyToClipboard(item.email).catch(logError);
@@ -61,7 +67,7 @@ const actionCopyEmail = action<CTX, EV<string>>((ctx, ev) => {
 });
 
 const actionCopyPassword = action<CTX, EV<string>>((ctx, ev) => {
-  const item = ctx.passwords.find((item) => (item.id = ev.value));
+  const item = ctx.passwords.find((item) => item.id == ev.value);
 
   if (item) {
     copyToClipboard(item.password).catch(logError);
@@ -81,7 +87,10 @@ const RobotMachine = createMachine(
       transition("VIEW_MODE", "viewMode", actionLogState),
       transition("ADD_PASSWORD", "addMode", reduceAddPassword),
     ),
-    editMode: state(transition("VIEW_MODE", "viewMode", actionLogState)),
+    editMode: state(
+      transition("VIEW_MODE", "viewMode", actionLogState),
+      transition("EDIT_PASSWORD", "viewMode", reduceEditPassword),
+    ),
     deleteMode: state(
       transition("VIEW_MODE", "viewMode", actionLogState),
       transition("DELETE_PASSWORD", "viewMode", reduceDeletePassword),

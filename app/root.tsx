@@ -53,7 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Password Manager" },
+    { title: "Password Manager (Robot)" },
     { name: "description", content: "A secure store for all your passwords." },
   ];
 }

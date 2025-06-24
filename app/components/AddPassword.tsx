@@ -8,53 +8,57 @@ import {
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 
-import Button from "./Button";
+import Button from "./ui/Button";
 import { Form } from "react-router";
-import InputField from "./InputField";
+import InputField from "./ui/InputField";
 import { useRef, useState } from "react";
 import type { Password } from "~/type.app";
 import { nanoid } from "nanoid";
 import { generateSecurePassword } from "~/lib/utils";
+import { useRobot } from "~/context/robot.context";
+import type { MachineState } from "~/robot/machine";
 
-type AddPasswordProps = {
-  disabled: boolean;
-  toggleAddMode: () => void;
-  toggleViewMode: () => void;
-  addPassword: (entry: Password) => void;
-};
+type AddPasswordProps = {};
 
 export default function AddPassword(props: AddPasswordProps) {
   let [isOpen, setIsOpen] = useState(false);
   const passwordRef = useRef<HTMLInputElement | null>(null);
 
-  const handleOpen = () => {
-    setIsOpen(true);
-    props.toggleAddMode();
-  };
+  const { current, send } = useRobot();
+  const state = current.name as MachineState;
 
-  const handleClose = () => {
-    setIsOpen(false);
-    props.toggleViewMode();
-  };
+  const handle = {
+    toggleViewMode: () => send("VIEW_MODE"),
+    toggleAddMode: () => send("ADD_MODE"),
+    addPassword: (entry: Password) => {
+      send({ type: "ADD_PASSWORD", value: entry });
+    },
+    open: () => {
+      setIsOpen(true);
+      handle.toggleAddMode();
+    },
+    close: () => {
+      setIsOpen(false);
+      handle.toggleViewMode();
+    },
+    gen: () => {
+      if (passwordRef.current) {
+        passwordRef.current.type = "text";
+        passwordRef.current.value = generateSecurePassword(12);
+      }
+    },
+    submit: (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-  const handleGen = () => {
-    if (passwordRef.current) {
-      passwordRef.current.type = "text";
-      passwordRef.current.value = generateSecurePassword(12);
-    }
-  };
+      const formData = new FormData(e.currentTarget);
+      const url = formData.get("url") as string;
+      const email = formData.get("email") as string;
+      const password = formData.get("password") as string;
+      const id = nanoid();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const formData = new FormData(e.currentTarget);
-    const url = formData.get("url") as string;
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    const id = nanoid();
-
-    props.addPassword({ id, url, email, password });
-    handleClose();
+      handle.addPassword({ id, url, email, password });
+      handle.close();
+    },
   };
 
   return (
@@ -63,13 +67,13 @@ export default function AddPassword(props: AddPasswordProps) {
         variant="rounded"
         size="lg"
         className="group"
-        onClick={handleOpen}
-        disabled={props.disabled}
+        onClick={handle.open}
+        disabled={state !== "viewMode"}
       >
         <PlusIcon className="size-6 stroke-2 transition-transform duration-200 ease-in-out group-data-open:rotate-45" />
       </Button>
 
-      <Dialog open={isOpen} onClose={handleClose}>
+      <Dialog open={isOpen} onClose={handle.close}>
         <DialogBackdrop className="bg-surface-primary/50 fixed inset-0 backdrop-blur-sm" />
 
         <div className="fixed inset-0 flex w-screen items-center justify-center">
@@ -90,7 +94,7 @@ export default function AddPassword(props: AddPasswordProps) {
                 name="add-password"
                 autoComplete="false"
                 className="space-y-3"
-                onSubmit={handleSubmit}
+                onSubmit={handle.submit}
               >
                 <InputField
                   name="url"
@@ -114,7 +118,7 @@ export default function AddPassword(props: AddPasswordProps) {
                   placeholder="eg: ****"
                   ref={passwordRef}
                   render={() => (
-                    <Button variant="rounded" size="sm" onClick={handleGen}>
+                    <Button variant="rounded" size="sm" onClick={handle.gen}>
                       <SparklesIcon className="size-4 stroke-2" />
                     </Button>
                   )}
@@ -123,7 +127,7 @@ export default function AddPassword(props: AddPasswordProps) {
             </section>
 
             <section className="mt-8 flex gap-2">
-              <Button variant="secondary" onClick={handleClose}>
+              <Button variant="secondary" onClick={handle.close}>
                 Cancel
               </Button>
               <Button type="submit" form="add-password-form">

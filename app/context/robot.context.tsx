@@ -1,9 +1,6 @@
 import { createContext, useContext } from "react";
 import { useMachine } from "react-robot";
-import {
-  RobotMachine,
-  type RobotMachineContext,
-} from "~/machine/robot.machine";
+import { RobotMachine, type RobotMachineContext } from "~/robot/machine";
 
 const RobotContext = createContext<RobotMachineContext | undefined>(undefined);
 
