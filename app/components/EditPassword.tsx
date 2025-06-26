@@ -1,10 +1,11 @@
+import { useRef } from "react";
+import { Form } from "react-router";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { CloseButton, DialogBackdrop, DialogPanel } from "@headlessui/react";
+
+import type { Password } from "~/type.app";
 import Button from "./ui/Button";
 import InputField from "./ui/InputField";
-import { Form } from "react-router";
-import { CloseButton } from "@headlessui/react";
-import type { Password } from "~/type.app";
-import { useRef } from "react";
 import { useRobot } from "~/context/robot.context";
 
 type EditPasswordProps = {
@@ -33,61 +34,70 @@ export default function EditPassword(props: EditPasswordProps) {
   };
 
   return (
-    <div className="p-4">
-      <div className="space-y-3">
-        <div className="flex justify-end">
-          <Button
-            ref={closeBtnRef}
-            variant="rounded"
-            size="sm"
-            element={CloseButton}
-          >
-            <XMarkIcon className="size-4.5 stroke-2" />
-          </Button>
-        </div>
+    <>
+      <DialogBackdrop className="bg-surface-primary/50 fixed inset-0 backdrop-blur-sm" />
 
-        <div className="space-y-2">
-          <p className="text-lg font-medium">Edit password</p>
-          <p className="text-content-secondary text-sm">
-            Modify the fields below to update the password
-          </p>
-        </div>
-
-        <Form
-          onSubmit={handleSubmit}
-          id="edit-password-form"
-          autoComplete="false"
+      <div className="fixed inset-0 w-screen">
+        <DialogPanel
+          transition
+          className="bg-surface-primary ring-surface-tertiary absolute top-0 right-0 h-full w-[400px] p-4 ring transition duration-300 ease-in-out data-closed:translate-x-[400px] max-[500px]:w-[80%]"
         >
-          <InputField
-            required
-            type="url"
-            label="url"
-            name="url"
-            placeholder="eg: https://placeholder.example"
-            defaultValue={props.item.url}
-          />
-          <InputField
-            required
-            type="email"
-            label="email"
-            name="email"
-            placeholder="eg: placeholder@example.com"
-            defaultValue={props.item.email}
-          />
-          <InputField
-            required
-            type="password"
-            label="password"
-            name="password"
-            placeholder="eg: ****"
-            defaultValue={props.item.password}
-          />
-        </Form>
-      </div>
+          <div className="space-y-3">
+            <div className="flex justify-end">
+              <Button
+                ref={closeBtnRef}
+                variant="rounded"
+                size="sm"
+                element={CloseButton}
+              >
+                <XMarkIcon className="size-4.5 stroke-2" />
+              </Button>
+            </div>
 
-      <Button form="edit-password-form" type="submit" className="mt-8">
-        save changes
-      </Button>
-    </div>
+            <div className="space-y-2">
+              <p className="text-lg font-medium">Edit password</p>
+              <p className="text-content-secondary text-sm">
+                Modify the fields below to update the password
+              </p>
+            </div>
+
+            <Form
+              onSubmit={handleSubmit}
+              id="edit-password-form"
+              autoComplete="false"
+            >
+              <InputField
+                required
+                type="url"
+                label="url"
+                name="url"
+                placeholder="eg: https://placeholder.example"
+                defaultValue={props.item.url}
+              />
+              <InputField
+                required
+                type="email"
+                label="email"
+                name="email"
+                placeholder="eg: placeholder@example.com"
+                defaultValue={props.item.email}
+              />
+              <InputField
+                required
+                type="password"
+                label="password"
+                name="password"
+                placeholder="eg: ****"
+                defaultValue={props.item.password}
+              />
+            </Form>
+          </div>
+
+          <Button form="edit-password-form" type="submit" className="mt-8">
+            save changes
+          </Button>
+        </DialogPanel>
+      </div>
+    </>
   );
 }

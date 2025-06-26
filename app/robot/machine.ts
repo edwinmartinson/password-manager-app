@@ -89,7 +89,7 @@ const RobotMachine = createMachine(
     ),
     editMode: state(
       transition("VIEW_MODE", "viewMode", actionLogState),
-      transition("EDIT_PASSWORD", "viewMode", reduceEditPassword),
+      transition("EDIT_PASSWORD", "editMode", reduceEditPassword),
     ),
     deleteMode: state(
       transition("VIEW_MODE", "viewMode", actionLogState),
